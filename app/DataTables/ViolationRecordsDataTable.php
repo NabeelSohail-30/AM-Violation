@@ -20,21 +20,21 @@ class ViolationRecordsDataTable extends DataTable
         return datatables()
         ->of($query)
         ->addIndexColumn()
-        ->addColumn('action', function($row) {
-            $buttons = '';
+        // ->addColumn('action', function($row) {
+        //     $buttons = '';
 
-            // Verify Address button
-            if ($row->is_address_verify == 0) {
-                $buttons .= '<button class="btn btn-sm btn-primary verify-address" data-id="'.$row->id.'">Verify Address</button> ';
-            }
+        //     // Verify Address button
+        //     if ($row->is_address_verify == 0) {
+        //         $buttons .= '<button class="btn btn-sm btn-primary verify-address" data-id="'.$row->id.'">Verify Address</button> ';
+        //     }
 
-            // Send Mail button
-            if ($row->is_address_verify == 2 && $row->is_send_mail == 0) {
-                $buttons .= '<button class="btn btn-sm btn-success send-mail" data-id="'.$row->id.'">Send Mail</button>';
-            }
+        //     // Send Mail button
+        //     if ($row->is_address_verify == 2 && $row->is_send_mail == 0) {
+        //         $buttons .= '<button class="btn btn-sm btn-success send-mail" data-id="'.$row->id.'">Send Mail</button>';
+        //     }
 
-            return $buttons;
-        })
+        //     return $buttons;
+        // })
         ->editColumn('is_address_verify', function($row) {
             switch ($row->is_address_verify) {
                 case '0': return 'Pending';
@@ -120,13 +120,13 @@ class ViolationRecordsDataTable extends DataTable
                 ->title('#')
                 ->searchable(false)
                 ->orderable(false),
-            Column::computed('action')
-                ->exportable(false)
-                ->printable(false)
-                ->searchable(false)
-                ->orderable(false)
-                ->width(60)
-                ->addClass('text-center hide-search'),
+            // Column::computed('action')
+            //     ->exportable(false)
+            //     ->printable(false)
+            //     ->searchable(false)
+            //     ->orderable(false)
+            //     ->width(60)
+            //     ->addClass('text-center hide-search'),
             ['data' => 'violation_type', 'name' => 'violation_type.title', 'title' => 'Violation Type'],
             ['data' => 'issue_date', 'name' => 'violation_records.issue_date', 'title' => 'Issue Date'],
             ['data' => 'address1', 'name' => 'violation_records.address1', 'title' => 'House & Street'],

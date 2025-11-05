@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::get('/storage', function () {
     Artisan::call('storage:link');
@@ -44,18 +44,26 @@ Route::get('/', function () {
 
 Route::group(['middleware' => 'auth'], function () {
     // Permission Module
-    Route::get('/role-permission',[RolePermission::class, 'index'])->name('role.permission.list');
-    Route::resource('permission',PermissionController::class);
+    Route::get('/role-permission', [RolePermission::class, 'index'])->name('role.permission.list');
+    Route::resource('permission', PermissionController::class);
     Route::resource('role', RoleController::class);
 
     // Dashboard Routes
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
-    
+
     // Users Module
     Route::resource('users', UserController::class);
     Route::get('/violation_api', [ViolationApiController::class, 'index'])->name('violation_api.index');
-    Route::post('/fetch_records', [ViolationApiController::class, 'fetch_records'])->name('violation_api.fetch_records');
+    // Route::post('/fetch_records', [ViolationApiController::class, 'fetch_records'])->name('violation_api.fetch_records');
     Route::get('/violation_records', [ViolationApiController::class, 'get_violation_records'])->name('violation_api.violation_records');
-    Route::post('/validate_address', [ViolationApiController::class, 'validate_specific_address'])->name('violation_api.validate_address');
-});
+    // Route::post('/validate_address', [ViolationApiController::class, 'validate_specific_address'])->name('violation_api.validate_address');
+    // Route::post('/send_mail', [ViolationApiController::class, 'send_mail'])->name('send_mail');
+    // Route::get('/upload_document', [ViolationApiController::class, 'upload_document'])->name('upload_document');
 
+    // Route::get('/violation_api', [ViolationApiController::class, 'index'])->name('violation_api.index');
+    // Route::get('/violation_records', [ViolationApiController::class, 'get_violation_records'])->name('violation_api.violation_records');
+
+    // automation routes (already working)
+    Route::post('/fetch_records', [ViolationApiController::class, 'fetch_records'])->name('violation_api.fetch_records');
+    Route::post('/create_job', [ViolationApiController::class, 'create_job'])->name('violation_api.create_job');
+});

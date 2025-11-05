@@ -72,83 +72,109 @@
    })();
    // ✅ Global functions   
 
-   $(document).on('click', '.verify-address', function(e) {
-      showLoader(); 
-      e.preventDefault();
-      let id = $(this).data('id');
+   // $(document).on('click', '.verify-address', function(e) {
+   //    showLoader(); 
+   //    e.preventDefault();
+   //    let id = $(this).data('id');
 
-      $.ajax({
-         url: "{{ route('violation_api.validate_address') }}",
-         type: "POST",
-         data: {
-               id: id,
-               _token: "{{ csrf_token() }}"
-         },
-         success: function(response) {
-            Swal.fire({
-               icon: 'success',
-               title: 'Success',
-               text: response.message,
-               confirmButtonColor: "#3a57e8"
-            });
+   //    $.ajax({
+   //       url: "",
+   //       type: "POST",
+   //       data: {
+   //             id: id,
+   //             _token: "{{ csrf_token() }}"
+   //       },
+   //       success: function(response) {
+   //          Swal.fire({
+   //             icon: 'success',
+   //             title: 'Success',
+   //             text: response.message,
+   //             confirmButtonColor: "#3a57e8"
+   //          });
                        
-         },
-         error: function(xhr, status, error) {
-            let title = 'Error';
-            let text = 'Something went wrong';
-            let icon = 'error';
-            let confirmColor = "#a50404ff";
+   //       },
+   //       error: function(xhr, status, error) {
+   //          let title = 'Error';
+   //          let text = 'Something went wrong';
+   //          let icon = 'error';
+   //          let confirmColor = "#a50404ff";
 
-            switch(xhr.status) {
-               case 400:
-                     title = 'Bad Request';
-                     text = xhr.responseJSON?.message || 'Invalid request';
-                     icon = 'warning';
-                     confirmColor = "#f39c12ff";
-                     break;
-               case 401:
-                     title = 'Unauthorized';
-                     text = xhr.responseJSON?.message || 'You are not authorized';
-                     icon = 'warning';
-                     confirmColor = "#f39c12ff";
-                     break;
-               case 404:
-                     title = 'Not Found';
-                     text = xhr.responseJSON?.message || 'No record found';
-                     icon = 'info';
-                     confirmColor = "#0080b3ff";
-                     break;
-               case 422:
-                     title = 'Validation Error';
-                     text = xhr.responseJSON?.message || 'Invalid data';
-                     icon = 'warning';
-                     confirmColor = "#f39c12ff";
-                     break;
-               case 500:
-                     title = 'Server Error';
-                     text = xhr.responseJSON?.message || 'Internal server error';
-                     icon = 'error';
-                     confirmColor = "#a50404ff";
-                     break;
-               default:
-                     title = 'Error';
-                     text = xhr.responseJSON?.message || error || 'Something went wrong';
-                     icon = 'error';
-                     confirmColor = "#a50404ff";
-            }
+   //          switch(xhr.status) {
+   //             case 400:
+   //                   title = 'Bad Request';
+   //                   text = xhr.responseJSON?.message || 'Invalid request';
+   //                   icon = 'warning';
+   //                   confirmColor = "#f39c12ff";
+   //                   break;
+   //             case 401:
+   //                   title = 'Unauthorized';
+   //                   text = xhr.responseJSON?.message || 'You are not authorized';
+   //                   icon = 'warning';
+   //                   confirmColor = "#f39c12ff";
+   //                   break;
+   //             case 404:
+   //                   title = 'Not Found';
+   //                   text = xhr.responseJSON?.message || 'No record found';
+   //                   icon = 'info';
+   //                   confirmColor = "#0080b3ff";
+   //                   break;
+   //             case 422:
+   //                   title = 'Validation Error';
+   //                   text = xhr.responseJSON?.message || 'Invalid data';
+   //                   icon = 'warning';
+   //                   confirmColor = "#f39c12ff";
+   //                   break;
+   //             case 500:
+   //                   title = 'Server Error';
+   //                   text = xhr.responseJSON?.message || 'Internal server error';
+   //                   icon = 'error';
+   //                   confirmColor = "#a50404ff";
+   //                   break;
+   //             default:
+   //                   title = 'Error';
+   //                   text = xhr.responseJSON?.message || error || 'Something went wrong';
+   //                   icon = 'error';
+   //                   confirmColor = "#a50404ff";
+   //          }
 
-            Swal.fire({
-               icon: icon,
-               title: title,
-               text: text,
-               confirmButtonColor: confirmColor
-            });
-         },
-         complete: function() {
-            hideLoader(); // loader hide
-            $('#dataTable').DataTable().ajax.reload();
-         }
-      });
-   });
+   //          Swal.fire({
+   //             icon: icon,
+   //             title: title,
+   //             text: text,
+   //             confirmButtonColor: confirmColor
+   //          });
+   //       },
+   //       complete: function() {
+   //          hideLoader(); // loader hide
+   //          $('#dataTable').DataTable().ajax.reload();
+   //       }
+   //    });
+   // });
+
+   // $(document).on('click', '.send-mail', function(e) {
+      
+   //    showLoader(); 
+   //    e.preventDefault();
+   //    var recordId = $(this).data('id');
+
+   //    $.ajax({
+   //       url: "",
+   //       type: 'POST',
+   //       data: {
+   //             record_id: recordId,
+   //             _token: '{{ csrf_token() }}'
+   //       },
+   //       success: function(response) {
+   //             if(response.status == 'success'){
+   //                alert(response.message);
+   //             } else {
+   //                alert('Error: ' + response.message);
+   //             }
+   //       },
+   //       error: function(err){
+   //             alert('AJAX error');
+   //       }
+   //    });
+   // });
 </script>
 @endpush
