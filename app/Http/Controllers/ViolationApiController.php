@@ -227,75 +227,155 @@ class ViolationApiController extends Controller
      */
     public function create_job(Request $request)
     {
+        // Fetch the violation record
         $record = DB::table('violation_records')->find($request->record_id);
-        if (!$record) return response()->json(['error' => 'Record not found'], 404);
+        if (!$record) {
+            return response()->json(['error' => 'Record not found'], 404);
+        }
 
+        // Setup Click2Mail authentication
         $auth = 'Basic ' . base64_encode(env('CLICK2MAIL_USERNAME') . ':' . env('CLICK2MAIL_PASSWORD'));
-        $base_url = env('CLICK2MAIL_BASE_URL');
+        $base_url = rtrim(env('CLICK2MAIL_BASE_URL'), '/');
         $documentId = env('DOCUMENT_ID');
 
         try {
-            // Create Address List
-            $xmlBody = "<addressList>
+            // =============================
+            // 1️⃣ CREATE ADDRESS LIST
+            // =============================
+            $xmlBody = "
+            <addressList>
                 <addressListName>Auto Address</addressListName>
                 <addressMappingId>1</addressMappingId>
                 <addresses>
                     <address>
                         <Firstname>No Name</Firstname>
                         <Lastname></Lastname>
-                        <Address1>{$record->address1}</Address1>
-                        <Address2>{$record->address2}</Address2>
-                        <City>{$record->address2}</City>
-                        <State>{$record->state}</State>
-                        <Postalcode>{$record->zip}</Postalcode>
+                        <Address1>" . htmlspecialchars($record->address1 ?? '') . "</Address1>
+                        <Address2>" . htmlspecialchars($record->address2 ?? '') . "</Address2>
+                        <City>" . htmlspecialchars($record->city ?? 'Unknown') . "</City>
+                        <State>" . htmlspecialchars($record->state ?? '') . "</State>
+                        <Postalcode>" . htmlspecialchars($record->zip ?? '') . "</Postalcode>
+                        <Country>US</Country>
                     </address>
                 </addresses>
             </addressList>";
 
             $addressResponse = Http::withHeaders([
                 'Authorization' => $auth,
-                'Content-Type' => 'application/xml'
+                'Content-Type'  => 'application/xml'
             ])->withBody($xmlBody, 'application/xml')
                 ->post("{$base_url}/addressLists");
 
-            $xml = simplexml_load_string($addressResponse->body());
-            $addressId = (string) ($xml->id ?? '');
+            $addressBody = $addressResponse->body();
 
-            if (!$addressId) {
-                return response()->json(['error' => 'Failed to upload address list'], 500);
+            if (!$addressResponse->successful()) {
+                Log::error("❌ Address List Creation Failed", [
+                    'record_id' => $record->id,
+                    'response' => $addressBody
+                ]);
+                return response()->json(['error' => 'Address list creation failed'], 500);
             }
 
-            // Create Job
+            // Parse response (XML or JSON)
+            if (str_starts_with(trim($addressBody), '<')) {
+                $xml = simplexml_load_string($addressBody);
+                $addressListId = (string) ($xml->id ?? null);
+            } else {
+                $json = json_decode($addressBody, true);
+                $addressListId = $json['id'] ?? null;
+            }
+
+            if (!$addressListId) {
+                Log::error("❌ No addressListId found in response", ['response' => $addressBody]);
+                return response()->json(['error' => 'No address list ID found'], 500);
+            }
+
+            Log::info("✅ Address List Created Successfully", [
+                'record_id' => $record->id,
+                'addressListId' => $addressListId
+            ]);
+
+            // 2️⃣ CREATE JOB - Enhanced payload
+            $jobPayload = [
+                "documentClass"  => "Letter 8.5 x 11",
+                "layout"         => "Address on Separate Page",
+                "productionTime" => "Next Day",
+                "color"          => "Black and White",
+                "paperType"      => "White 24#",
+                "printOption"    => "Printing One Side",
+                "documentId"     => $documentId,
+                "addressId"      => $addressListId,
+                "mailClass"      => "First Class",
+                "billingMethod"  => "PREPAID", // Add this
+                "envelope"       => "No. 10 Regular", // Add this
+            ];
+
+            Log::info("📦 Creating Click2Mail Job", [
+                'record_id' => $record->id,
+                'payload' => $jobPayload
+            ]);
+
             $jobResponse = Http::withHeaders([
                 'Authorization' => $auth,
-                'Content-Type' => 'application/json'
-            ])->post("{$base_url}/jobs", [
-                "documentClass" => "Letter 8.5 x 11",
-                "layout" => "Address on Separate Page",
-                "productionTime" => "Next Day",
-                "color" => "Black and White",
-                "paperType" => "White 24#",
-                "printOption" => "Printing One Side",
-                "documentId" => $documentId,
-                "addressId" => $addressId,
-                "mailClass" => "First Class"
-            ]);
+                'Content-Type'  => 'application/json'
+            ])->timeout(30)->post("{$base_url}/jobs", $jobPayload);
+
+            // Enhanced error handling
+            if (!$jobResponse->successful()) {
+                $errorBody = $jobResponse->body();
+                Log::error("❌ Click2Mail Job Creation Failed", [
+                    'record_id' => $record->id,
+                    'status' => $jobResponse->status(),
+                    'response' => $errorBody,
+                    'payload' => $jobPayload
+                ]);
+
+                return response()->json([
+                    'error' => 'Failed to create job',
+                    'details' => json_decode($errorBody, true) ?: $errorBody
+                ], 500);
+            }
 
             $jobData = $jobResponse->json();
             $jobId = $jobData['id'] ?? null;
-            $jobStatus = $jobData['status'] ?? 'Editing';
 
+            if (!$jobId) {
+                Log::error("❌ No jobId returned", ['response' => $jobData]);
+                return response()->json(['error' => 'No job ID returned'], 500);
+            }
+
+            $jobStatus = $jobData['status'];
+
+            // =============================
+            // 3️⃣ UPDATE DATABASE
+            // =============================
             DB::table('violation_records')->where('id', $record->id)->update([
-                'click2mail_job_id' => $jobId,
+                'click2mail_job_id'     => $jobId,
                 'click2mail_job_status' => $jobStatus,
+                'click2mail_created_at' => now()
             ]);
 
-            return response()->json(['success' => true, 'jobId' => $jobId, 'status' => $jobStatus]);
-        } catch (Exception $e) {
-            Log::error("Click2Mail Error: " . $e->getMessage());
-            return response()->json(['error' => 'Job creation failed', 'message' => $e->getMessage()], 500);
+            Log::info("✅ Click2Mail Job Created Successfully", [
+                'record_id' => $record->id,
+                'job_id' => $jobId,
+                'status' => $jobStatus
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'jobId'   => $jobId,
+                'status'  => $jobStatus
+            ]);
+        } catch (\Exception $e) {
+            Log::error("💥 Click2Mail Job Creation Exception for Record {$record->id}: " . $e->getMessage());
+            return response()->json([
+                'error' => 'Job creation failed',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
+
+
 
     public function create_job_cron($record_id)
     {
