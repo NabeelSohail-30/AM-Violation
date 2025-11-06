@@ -29,9 +29,9 @@ class Kernel extends ConsoleKernel
         // Run daily at 1:20 AM PKT (GMT+5)
         // $schedule->command('violation:process')->dailyAt('01:20')->withoutOverlapping();
         // $schedule->command('test:cron')->everyMinute();
-        $schedule->command('violation:process')
-         ->dailyAt('02:10')
-         ->timezone('Asia/Karachi');
+        // $schedule->command('violation:process')
+        //  ->dailyAt('02:10')
+        //  ->timezone('Asia/Karachi');
 
     }
 

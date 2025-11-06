@@ -187,26 +187,37 @@ class ViolationApiController extends Controller
     /**
      * Validate an address using SmartyStreets API
      */
-    private function validate_US_address(array $address)
+    function validate_US_address(array $address)
     {
+        $params = [
+            "street"   => trim($address['address1'] ?? ''),
+            "city"     => trim($address['address2'] ?? ''),  // <-- use address2 as city
+            "state"    => $address['state'] ?? 'NY',
+            "zipcode"  => $address['zip'] ?? '',
+            "auth-id"  => env('SMARTY_AUTH_ID'),
+            "auth-token" => env('SMARTY_AUTH_TOKEN'),
+        ];
+
+
         $endpoint = "https://us-street.api.smarty.com/street-address";
 
+        Log::info("Smarty API Request Parameters:", $params);
+
         try {
-            $response = Http::get($endpoint, [
-                "street" => trim(($address['house_number'] ?? '') . " " . ($address['street'] ?? '')),
-                "city" => $this->boro_map[$address['boro']] ?? $address['boro'] ?? '',
-                "state" => $address['state'] ?? 'NY',
-                "zipcode" => $address['zip'] ?? '',
-                "key" => env('SMARTY_API_KEY')
-            ]);
+            $response = Http::timeout(30)->get($endpoint, $params);
+
+            Log::info("Smarty Raw Response:", ['body' => $response->body()]);
 
             if ($response->successful()) {
-                return !empty($response->json()) ? 1 : 2;
+                $json = $response->json();
+                Log::info("Smarty Parsed JSON:", $json);
+                return !empty($json) ? 1 : 2;
             }
 
+            Log::warning("Smarty API Error Response:", $response->json());
             return 0;
-        } catch (Exception $e) {
-            Log::error("Smarty API error: " . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error("SmartyStreets API Error: " . $e->getMessage());
             return 0;
         }
     }
