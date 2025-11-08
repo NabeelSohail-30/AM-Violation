@@ -59,7 +59,10 @@
          .card {
             transition: all 0.25s ease;
             background-color: #fff;
-            height: 198px !important;
+            height: auto;
+            justify-content: center;
+            align-items: center;
+            display: grid;
          }
 
          .card:hover {

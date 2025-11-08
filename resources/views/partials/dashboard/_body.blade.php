@@ -12,7 +12,7 @@
     {{ $slot }}
     </div>
     
-    @include('partials.dashboard._body_footer')
+    <!-- @include('partials.dashboard._body_footer') -->
 </main>
 
 @include('partials.components.setting-offcanvas')

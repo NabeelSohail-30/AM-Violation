@@ -37,7 +37,7 @@
     </li>
 
 
-    <li class="nav-item">
+    <!-- <li class="nav-item">
         <a class="nav-link " data-bs-toggle="collapse" href="#sidebar-user" role="button" aria-expanded="false" aria-controls="sidebar-user">
             <span style="margin-left: 0;"><i class="fas fa-users me-2"></i></i> Users</span>
             <i class="fas fa-chevron-right right-icon"></i>
@@ -55,7 +55,7 @@
                 </a>
             </li>
         </ul>
-    </li>
+    </li> -->
 
     <li class="nav-item">
         <a class="nav-link" data-bs-toggle="collapse" href="#violation-api-error" role="button" aria-expanded="false" aria-controls="violation-api-error">

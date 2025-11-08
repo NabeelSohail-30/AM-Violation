@@ -87,12 +87,12 @@ class ViolationAPiDataTable extends DataTable
             ['data' => 'last_fetched_at', 'name' => 'violation_api.last_fetched_at', 'title' => 'Last Fetched Time'],
             ['data' => 'last_fetch_count', 'name' => 'violation_api.last_fetch_count', 'title' => 'Last Fetch Record Count'],
             ['data' => 'is_active', 'name' => 'violation_api.is_active', 'title' => 'Status'],
-            Column::computed('action')
-                ->exportable(false)
-                ->printable(false)
-                ->searchable(false)
-                ->width(60)
-                ->addClass('text-center hide-search'),
+            // Column::computed('action')
+            //     ->exportable(false)
+            //     ->printable(false)
+            //     ->searchable(false)
+            //     ->width(60)
+            //     ->addClass('text-center hide-search'),
         ];
     }
 
