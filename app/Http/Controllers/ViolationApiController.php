@@ -88,7 +88,7 @@ class ViolationApiController extends Controller
      */
     public function fetch_records_cron($api_id)
     {
-        ini_set('max_execution_time', 1800); // 30 mins
+        ini_set('max_execution_time', 10000); // 30 mins
 
         $record = DB::table('violation_api')->find($api_id);
 
@@ -134,7 +134,7 @@ class ViolationApiController extends Controller
                 try {
                     $item['state'] = 'NY';
                     $address = $this->normalize_address($item, $record->violation_type);
-                    $validate_address = $this->validate_US_address($address);
+                    // $validate_address = $this->validate_US_address($address);
 
                     // Parse dynamic issue date safely
                     $issue_date = null;
@@ -155,7 +155,6 @@ class ViolationApiController extends Controller
                         'state'             => $address['state'] ?? 'NY',
                         'zip'               => $address['zip'] ?? '',
                         'json'              => json_encode($item) ?? '{}',
-                        'is_address_verify' => $validate_address ?? 0,
                         'created_by'        => $user_id,
                         'created_date'      => now(),
                     ]);

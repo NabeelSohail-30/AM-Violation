@@ -18,38 +18,67 @@ class ViolationRecordsDataTable extends DataTable
     public function dataTable($query)
     {
         return datatables()
-        ->of($query)
-        ->addIndexColumn()
-        // ->addColumn('action', function($row) {
-        //     $buttons = '';
+            ->of($query)
+            ->addIndexColumn()
+            // ->addColumn('action', function($row) {
+            //     $buttons = '';
 
-        //     // Verify Address button
-        //     if ($row->is_address_verify == 0) {
-        //         $buttons .= '<button class="btn btn-sm btn-primary verify-address" data-id="'.$row->id.'">Verify Address</button> ';
-        //     }
+            //     // Verify Address button
+            //     if ($row->is_address_verify == 0) {
+            //         $buttons .= '<button class="btn btn-sm btn-primary verify-address" data-id="'.$row->id.'">Verify Address</button> ';
+            //     }
 
-        //     // Send Mail button
-        //     if ($row->is_address_verify == 2 && $row->is_send_mail == 0) {
-        //         $buttons .= '<button class="btn btn-sm btn-success send-mail" data-id="'.$row->id.'">Send Mail</button>';
-        //     }
+            //     // Send Mail button
+            //     if ($row->is_address_verify == 2 && $row->is_send_mail == 0) {
+            //         $buttons .= '<button class="btn btn-sm btn-success send-mail" data-id="'.$row->id.'">Send Mail</button>';
+            //     }
 
-        //     return $buttons;
+            //     return $buttons;
+            // })
+            // ->editColumn('is_address_verify', function ($row) {
+            //     switch ($row->is_address_verify) {
+            //         case '0':
+            //             return 'Pending';
+            //         case '2':
+            //             return 'Invalid';
+            //         default:
+            //             return 'Valid';
+            //     }
+            // })
+            // ->editColumn('is_send_mail', function($row) {
+            //     switch ($row->is_send_mail) {
+            //         case '0': return 'Pending';
+            //         case '2': return 'Sent';
+            //         default: return 'Sending Error';
+            //     }
+            // })
+            ->editColumn('is_address_verify', function ($row) {
+                switch ($row->is_address_verify) {
+                    case 0:
+                        return 'Pending';
+                    case 2:
+                        return 'Invalid';
+                    default:
+                        return 'Valid';
+                }
+            })
+            ->orderColumn('is_address_verify', function ($query, $order) {
+                $query->orderBy('violation_records.is_address_verify', $order);
+            })
+            ->editColumn('click2mail_job_status', function ($row) {
+                return $row->click2mail_job_status ?? '—';
+            })
+            ->orderColumn('click2mail_job_status', function ($query, $order) {
+                $query->orderBy('violation_records.click2mail_job_status', $order);
+            });
+
+        // ->editColumn('click2mail_job_status', function ($row) {
+        //     return $row->click2mail_job_status ?? '—';
         // })
-        ->editColumn('is_address_verify', function($row) {
-            switch ($row->is_address_verify) {
-                case '0': return 'Pending';
-                case '2': return 'Invalid';
-                default: return 'Valid';
-            }
-        })
-        ->editColumn('is_send_mail', function($row) {
-            switch ($row->is_send_mail) {
-                case '0': return 'Pending';
-                case '2': return 'Sent';
-                default: return 'Sending Error';
-            }
-        })
-        ->rawColumns(['action', 'is_address_verify', 'is_send_mail']);
+
+        // ->rawColumns(['is_address_verify']);
+
+        // ->rawColumns(['action', 'is_address_verify', 'is_send_mail']);
     }
 
     /**
@@ -70,10 +99,11 @@ class ViolationRecordsDataTable extends DataTable
                 'violation_records.address1',
                 'violation_records.address2',
                 'violation_records.state',
-                'violation_records.is_address_verify',
-                'violation_records.is_send_mail'
+                'violation_records.is_address_verify', // keep numeric
+                'violation_records.click2mail_job_status'
             ])
             ->where('violation_records.is_active', '!=', 2);
+
 
         // 🔎 Filter by date if provided
         if (request()->filled('min_date') && request()->filled('max_date')) {
@@ -86,6 +116,14 @@ class ViolationRecordsDataTable extends DataTable
         } elseif (request()->filled('max_date')) {
             $model->whereDate('violation_records.issue_date', '<=', request('max_date'));
         }
+        if ($address = request('address_filter')) {
+            $model->where('violation_records.is_address_verify', $address);
+        }
+
+        if ($mail = request('mail_filter')) {
+            $model->where('violation_records.click2mail_job_status', $mail);
+        }
+
 
         return $this->applyScopes($model->orderBy('violation_records.issue_date', 'DESC'));
     }
@@ -98,15 +136,15 @@ class ViolationRecordsDataTable extends DataTable
     public function html()
     {
         return $this->builder()
-                    ->setTableId('dataTable')
-                    ->columns($this->getColumns())
-                    ->minifiedAjax()
-                    ->dom('<"row align-items-center"<"col-md-2" l><"col-md-6" B><"col-md-4"f>><"table-responsive my-3" rt><"row align-items-center" <"col-md-6" i><"col-md-6" p>><"clear">')
-            
-                    ->parameters([
-                        "processing" => true,
-                        "autoWidth" => false,
-                    ]);
+            ->setTableId('dataTable')
+            ->columns($this->getColumns())
+            ->minifiedAjax()
+            ->dom('<"row align-items-center"<"col-md-2" l><"col-md-6" B><"col-md-4"f>><"table-responsive my-3" rt><"row align-items-center" <"col-md-6" i><"col-md-6" p>><"clear">')
+
+            ->parameters([
+                "processing" => true,
+                "autoWidth" => false,
+            ]);
     }
 
     /**
@@ -133,8 +171,9 @@ class ViolationRecordsDataTable extends DataTable
             ['data' => 'address2', 'name' => 'violation_records.address2', 'title' => 'City'],
             ['data' => 'state', 'name' => 'violation_records.state', 'title' => 'State'],
             ['data' => 'is_address_verify', 'name' => 'violation_records.is_address_verify', 'title' => 'Valid Address'],
-            ['data' => 'is_send_mail', 'name' => 'violation_records.is_send_mail', 'title' => 'Send Mail'],
-            ['data' => 'created_date', 'name' => 'violation_records.created_date', 'title' => 'Fetched At']
+            ['data' => 'click2mail_job_status', 'name' => 'violation_records.click2mail_job_status', 'title' => 'Mail Progress'],
+            // ['data' => 'is_send_mail', 'name' => 'violation_records.is_send_mail', 'title' => 'Send Mail'],
+            // ['data' => 'created_date', 'name' => 'violation_records.created_date', 'title' => 'Fetched At']
         ];
     }
 

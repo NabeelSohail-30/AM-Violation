@@ -33,6 +33,40 @@ class Kernel extends ConsoleKernel
         //  ->dailyAt('02:10')
         //  ->timezone('Asia/Karachi');
 
+        // 1️⃣ Fetch Violations - Every Friday midnight (full data)
+        $schedule->command('violation:fetch')
+            ->weeklyOn(5, '0:00')
+            ->withoutOverlapping()
+            ->sendOutputTo(storage_path('logs/fetch.log'));
+
+        // 2️⃣ Verify Addresses - Saturday → Thursday, every 3 hours, 100 records per run
+        $schedule->command('violation:verify-address')
+            ->cron('0 */3 * * 6-4') // every 3 hours from Sat to Thu
+            ->withoutOverlapping()
+            ->sendOutputTo(storage_path('logs/verify.log'));
+
+        // 3️⃣ Create Click2Mail Jobs - Saturday → Friday, every 4 hours, 100 records per run
+        $schedule->command('violation:create-click2mail-job')
+            ->cron('0 */4 * * 6-5')
+            ->withoutOverlapping()
+            ->sendOutputTo(storage_path('logs/create_jobs.log'));
+
+        // 4️⃣ Submit Jobs - Every Tuesday + Friday midnight, 100 records per run
+        $schedule->command('click2mail:submit-job')
+            ->weeklyOn(2, '0:00') // Tuesday midnight
+            ->withoutOverlapping()
+            ->sendOutputTo(storage_path('logs/submit_jobs_tue.log'));
+
+        $schedule->command('click2mail:submit-job')
+            ->weeklyOn(5, '0:00') // Friday midnight
+            ->withoutOverlapping()
+            ->sendOutputTo(storage_path('logs/submit_jobs_fri.log'));
+
+        // 5️⃣ Daily Job Status Update - Every day at 2 PM
+        $schedule->command('click2mail:check-job-status')
+            ->dailyAt('14:00')
+            ->withoutOverlapping()
+            ->sendOutputTo(storage_path('logs/status_update.log'));
     }
 
     /**

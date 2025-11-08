@@ -1,75 +1,81 @@
 @extends('global.datatable', [
-    'pageTitle' => $pageTitle,
-    'auth_user' => $auth_user,
-    'assets' => $assets,
-    'headerAction' => $headerAction,
-    'dataTable' => $dataTable
+'pageTitle' => $pageTitle,
+'auth_user' => $auth_user,
+'assets' => $assets,
+'headerAction' => $headerAction,
+'dataTable' => $dataTable
 ])
 
 
 @section('filters')
-   <div class="row mt-5 mb-3 px-3">
-      <div class="col-12 mb-2">
-         <h6><i class="fas fa-calendar-alt me-1"></i> Filter by Issue Date</h6>
-      </div>
-      <div class="col-md-3">
-         <input type="date" id="min_date" class="form-control" placeholder="Start Date">
-      </div>
-      <div class="col-md-3">
-         <input type="date" id="max_date" class="form-control" placeholder="End Date">
-      </div>
-      <div class="col-md-2">
-         <button id="filterBtn" class="btn btn-primary">Filter</button>
-      </div>
+<div class="row mt-5 mb-3 px-3">
+   <!-- <div class="col-12 mb-2">
+      <h6><i class="fas fa-calendar-alt me-1"></i> Filter by Issue Date</h6>
    </div>
+   <div class="col-md-3">
+      <input type="date" id="min_date" class="form-control" placeholder="Start Date">
+   </div>
+   <div class="col-md-3">
+      <input type="date" id="max_date" class="form-control" placeholder="End Date">
+   </div> -->
+   <div class="col-md-3">
+      <!-- <label>Valid Address</label> -->
+      <select id="filter_address" class="form-control">
+         <option value="">All</option>
+         <option value="0">Pending</option>
+         <option value="1">Valid</option>
+         <option value="2">Invalid</option>
+      </select>
+   </div>
+   <div class="col-md-3">
+      <!-- <label>Mail Progress</label> -->
+      <select id="filter_mail" class="form-control">
+         <option value="">All</option>
+         <option value="Editing">Editing</option>
+         <option value="Awaiting Production">Awaiting Production</option>
+         <option value="In Production">In Production</option>
+      </select>
+   </div>
+   <div class="col-md-2 d-flex justify-center align-center">
+      <button id="filterBtn" class="btn btn-primary">Filter</button>
+   </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
-
-   (function () {
+   (function() {
       function getTableInstance() {
          if (window.LaravelDataTables && window.LaravelDataTables['dataTable']) {
-               return window.LaravelDataTables['dataTable'];
+            return window.LaravelDataTables['dataTable'];
          }
          if ($.fn.dataTable.isDataTable('#dataTable')) {
-               return $('#dataTable').DataTable();
+            return $('#dataTable').DataTable();
          }
          return null;
       }
 
       function initFilters() {
          const table = getTableInstance();
+         if (!table) return setTimeout(initFilters, 100);
 
-         if (!table) {
-            return setTimeout(initFilters, 100);
-         }
-
-         // Filter button
-         $('#filterBtn').on('click', function () {
-               table.ajax.reload();
+         $('#filterBtn').on('click', function() {
+            table.ajax.reload();
          });
 
-         // Reset button
-         $('#resetBtn').on('click', function () {
-               $('#min_date').val('');
-               $('#max_date').val('');
-               table.ajax.reload();
+         $('#dataTable').on('preXhr.dt', function(e, settings, data) {
+            data.address_filter = $('#filter_address').val();
+            data.mail_filter = $('#filter_mail').val();
+            const min = $('#min_date').val();
+            const max = $('#max_date').val();
+            if (min) data.min_date = min;
+            if (max) data.max_date = max;
          });
-
-         // Extra params
-         $('#dataTable').on('preXhr.dt', function (e, settings, data) {
-               const min = $('#min_date').val();
-               const max = $('#max_date').val();
-
-               if (min) data.min_date = min;
-               if (max) data.max_date = max;
-         });
-
       }
 
       document.addEventListener('DOMContentLoaded', initFilters);
    })();
+
    // ✅ Global functions   
 
    // $(document).on('click', '.verify-address', function(e) {
@@ -91,7 +97,7 @@
    //             text: response.message,
    //             confirmButtonColor: "#3a57e8"
    //          });
-                       
+
    //       },
    //       error: function(xhr, status, error) {
    //          let title = 'Error';
@@ -152,7 +158,7 @@
    // });
 
    // $(document).on('click', '.send-mail', function(e) {
-      
+
    //    showLoader(); 
    //    e.preventDefault();
    //    var recordId = $(this).data('id');

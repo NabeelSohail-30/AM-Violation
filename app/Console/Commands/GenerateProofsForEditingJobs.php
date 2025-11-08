@@ -17,8 +17,8 @@ class GenerateProofsForEditingJobs extends Command
     {
         // 1️⃣ Fetch the first job with status 'Editing' from the database (for testing purposes, limit to one job)
         $job = DB::table('violation_records')
-                 ->where('click2mail_job_status', 'Editing')
-                 ->first();
+            ->where('click2mail_job_status', 'Editing')
+            ->first();
 
         if (!$job) {
             Log::info('No jobs found with Editing status.');
@@ -37,17 +37,21 @@ class GenerateProofsForEditingJobs extends Command
         try {
             // Create Proof Request
             $response = Http::withBasicAuth($username, $password)
-                            ->post("{$base_url}/jobs/{$jobId}/proof");
+                ->post("{$base_url}/jobs/{$jobId}/proof");
 
-            // Log the response from Click2Mail
-            Log::info("Proof Creation Response for Job ID {$jobId}: " . $response->body());
+            Log::info("📦 Proof Creation Attempt", [
+                'job_id' => $jobId,
+                'status_code' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->body()
+            ]);
+
 
             if ($response->successful()) {
                 Log::info("Proof successfully created for Job ID {$jobId}.");
             } else {
                 Log::error("Failed to create proof for Job ID {$jobId}. Response: {$response->body()}");
             }
-
         } catch (\Exception $e) {
             Log::error("Error requesting proof for Job ID {$jobId}: {$e->getMessage()}");
         }
